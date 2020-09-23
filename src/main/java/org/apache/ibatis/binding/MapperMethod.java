@@ -39,6 +39,8 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 
 /**
+ * 映射方法
+ *
  * @author Clinton Begin
  * @author Eduardo Macarron
  * @author Lasse Voss
@@ -50,37 +52,53 @@ public class MapperMethod {
   private final MethodSignature method;
 
   public MapperMethod(Class<?> mapperInterface, Method method, Configuration config) {
+    // SQL 命令
     this.command = new SqlCommand(config, mapperInterface, method);
+    // 方法签名
     this.method = new MethodSignature(config, mapperInterface, method);
   }
 
+  /**
+   * 执行方法
+   *
+   * @param sqlSession
+   * @param args
+   * @return
+   */
   public Object execute(SqlSession sqlSession, Object[] args) {
     Object result;
     switch (command.getType()) {
       case INSERT: {
+        // 新增类型
         Object param = method.convertArgsToSqlCommandParam(args);
         result = rowCountResult(sqlSession.insert(command.getName(), param));
         break;
       }
       case UPDATE: {
+        // 修改
         Object param = method.convertArgsToSqlCommandParam(args);
         result = rowCountResult(sqlSession.update(command.getName(), param));
         break;
       }
       case DELETE: {
+        // 删除
         Object param = method.convertArgsToSqlCommandParam(args);
         result = rowCountResult(sqlSession.delete(command.getName(), param));
         break;
       }
       case SELECT:
+        // 查询
         if (method.returnsVoid() && method.hasResultHandler()) {
           executeWithResultHandler(sqlSession, args);
           result = null;
         } else if (method.returnsMany()) {
+          // 返回多条
           result = executeForMany(sqlSession, args);
         } else if (method.returnsMap()) {
+          // 返回 map
           result = executeForMap(sqlSession, args);
         } else if (method.returnsCursor()) {
+          // 返回游标
           result = executeForCursor(sqlSession, args);
         } else {
           Object param = method.convertArgsToSqlCommandParam(args);
@@ -92,6 +110,7 @@ public class MapperMethod {
         }
         break;
       case FLUSH:
+        // 刷新
         result = sqlSession.flushStatements();
         break;
       default:
@@ -137,10 +156,20 @@ public class MapperMethod {
     }
   }
 
+  /**
+   * 查询多条记录
+   *
+   * @param sqlSession
+   * @param args
+   * @param <E>
+   * @return
+   */
   private <E> Object executeForMany(SqlSession sqlSession, Object[] args) {
     List<E> result;
+    // 转换参数
     Object param = method.convertArgsToSqlCommandParam(args);
     if (method.hasRowBounds()) {
+      // 有行绑定
       RowBounds rowBounds = method.extractRowBounds(args);
       result = sqlSession.selectList(command.getName(), param, rowBounds);
     } else {
@@ -251,6 +280,15 @@ public class MapperMethod {
       return type;
     }
 
+    /**
+     * 解析映射语句
+     *
+     * @param mapperInterface
+     * @param methodName
+     * @param declaringClass
+     * @param configuration
+     * @return
+     */
     private MappedStatement resolveMappedStatement(Class<?> mapperInterface, String methodName,
         Class<?> declaringClass, Configuration configuration) {
       String statementId = mapperInterface.getName() + "." + methodName;

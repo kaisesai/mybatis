@@ -21,4 +21,13 @@
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.apache.ibatis.autoconstructor.AutoConstructorMapper">
+
+  <!--开启二级缓存-->
+  <cache blocking="false"/>
+
+  <!--<select id="selectOneById" resultType="org.apache.ibatis.autoconstructor.PrimitiveSubject">-->
+  <select id="selectOneById" resultType="primitiveSubject">
+    SELECT * FROM subject WHERE id = #{id}
+  </select>
+
 </mapper>

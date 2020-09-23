@@ -41,7 +41,15 @@ public class TransactionalCache implements Cache {
 
   private final Cache delegate;
   private boolean clearOnCommit;
+
+  /**
+   * 事务未提交前的保存的缓存数据
+   */
   private final Map<Object, Object> entriesToAddOnCommit;
+
+  /**
+   * 事务未提交前未命中的缓存数据
+   */
   private final Set<Object> entriesMissedInCache;
 
   public TransactionalCache(Cache delegate) {
@@ -78,6 +86,7 @@ public class TransactionalCache implements Cache {
 
   @Override
   public void putObject(Object key, Object object) {
+    // 把数据先临时保存起来
     entriesToAddOnCommit.put(key, object);
   }
 
@@ -94,13 +103,16 @@ public class TransactionalCache implements Cache {
 
   public void commit() {
     if (clearOnCommit) {
+      // 提交的时候清理二级缓存
       delegate.clear();
     }
+    // 提交的时候，刷新查询的数据，用于保存到二级缓存中
     flushPendingEntries();
     reset();
   }
 
   public void rollback() {
+    // 回滚时解析未命中的数据
     unlockMissedEntries();
     reset();
   }
@@ -112,6 +124,7 @@ public class TransactionalCache implements Cache {
   }
 
   private void flushPendingEntries() {
+    // 提交的时候，把临时保存的数据，真正放入二级缓存中
     for (Map.Entry<Object, Object> entry : entriesToAddOnCommit.entrySet()) {
       delegate.putObject(entry.getKey(), entry.getValue());
     }
@@ -123,6 +136,7 @@ public class TransactionalCache implements Cache {
   }
 
   private void unlockMissedEntries() {
+    // 移除未命中的数据
     for (Object entry : entriesMissedInCache) {
       try {
         delegate.removeObject(entry);

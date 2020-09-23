@@ -96,6 +96,8 @@ import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
+ * mybatis 的配置类
+ *
  * @author Clinton Begin
  */
 public class Configuration {
@@ -181,13 +183,17 @@ public class Configuration {
   }
 
   public Configuration() {
+    // 配置各种基础类的别名
+    // 事务管理器
     typeAliasRegistry.registerAlias("JDBC", JdbcTransactionFactory.class);
     typeAliasRegistry.registerAlias("MANAGED", ManagedTransactionFactory.class);
 
+    // 数据源工厂
     typeAliasRegistry.registerAlias("JNDI", JndiDataSourceFactory.class);
     typeAliasRegistry.registerAlias("POOLED", PooledDataSourceFactory.class);
     typeAliasRegistry.registerAlias("UNPOOLED", UnpooledDataSourceFactory.class);
 
+    // 缓存类别名
     typeAliasRegistry.registerAlias("PERPETUAL", PerpetualCache.class);
     typeAliasRegistry.registerAlias("FIFO", FifoCache.class);
     typeAliasRegistry.registerAlias("LRU", LruCache.class);
@@ -199,6 +205,7 @@ public class Configuration {
     typeAliasRegistry.registerAlias("XML", XMLLanguageDriver.class);
     typeAliasRegistry.registerAlias("RAW", RawLanguageDriver.class);
 
+    // 日志类别名
     typeAliasRegistry.registerAlias("SLF4J", Slf4jImpl.class);
     typeAliasRegistry.registerAlias("COMMONS_LOGGING", JakartaCommonsLoggingImpl.class);
     typeAliasRegistry.registerAlias("LOG4J", Log4jImpl.class);
@@ -207,9 +214,11 @@ public class Configuration {
     typeAliasRegistry.registerAlias("STDOUT_LOGGING", StdOutImpl.class);
     typeAliasRegistry.registerAlias("NO_LOGGING", NoLoggingImpl.class);
 
+    // 动态代理别名
     typeAliasRegistry.registerAlias("CGLIB", CglibProxyFactory.class);
     typeAliasRegistry.registerAlias("JAVASSIST", JavassistProxyFactory.class);
 
+    // xml 脚本解析器
     languageRegistry.setDefaultDriverClass(XMLLanguageDriver.class);
     languageRegistry.register(RawLanguageDriver.class);
   }
@@ -641,21 +650,57 @@ public class Configuration {
     return MetaObject.forObject(object, objectFactory, objectWrapperFactory, reflectorFactory);
   }
 
+  /**
+   * 创建参数处理器
+   *
+   * @param mappedStatement
+   * @param parameterObject
+   * @param boundSql
+   * @return
+   */
   public ParameterHandler newParameterHandler(MappedStatement mappedStatement, Object parameterObject, BoundSql boundSql) {
+    // 获取参数处理器
     ParameterHandler parameterHandler = mappedStatement.getLang().createParameterHandler(mappedStatement, parameterObject, boundSql);
+    // 应用插件
     parameterHandler = (ParameterHandler) interceptorChain.pluginAll(parameterHandler);
     return parameterHandler;
   }
 
+  /**
+   * 创建结果集处理器
+   *
+   * @param executor
+   * @param mappedStatement
+   * @param rowBounds
+   * @param parameterHandler
+   * @param resultHandler
+   * @param boundSql
+   * @return
+   */
   public ResultSetHandler newResultSetHandler(Executor executor, MappedStatement mappedStatement, RowBounds rowBounds, ParameterHandler parameterHandler,
       ResultHandler resultHandler, BoundSql boundSql) {
+    // 获取参数处理器
     ResultSetHandler resultSetHandler = new DefaultResultSetHandler(executor, mappedStatement, parameterHandler, resultHandler, boundSql, rowBounds);
+    // 应用插件
     resultSetHandler = (ResultSetHandler) interceptorChain.pluginAll(resultSetHandler);
     return resultSetHandler;
   }
 
+  /**
+   * 创建 StatementHandler
+   *
+   * @param executor
+   * @param mappedStatement
+   * @param parameterObject
+   * @param rowBounds
+   * @param resultHandler
+   * @param boundSql
+   * @return
+   */
   public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+    // 创建一个 RoutingStatementHandler 路由的声明处理器
     StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
+    // 对 StatementHandler 应用插件
     statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);
     return statementHandler;
   }
@@ -669,15 +714,21 @@ public class Configuration {
     executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
     Executor executor;
     if (ExecutorType.BATCH == executorType) {
+      // 批量执行器
       executor = new BatchExecutor(this, transaction);
     } else if (ExecutorType.REUSE == executorType) {
+      // 重用执行器
       executor = new ReuseExecutor(this, transaction);
     } else {
+      // 简单执行器
       executor = new SimpleExecutor(this, transaction);
     }
+    // 如果启用二级缓存
     if (cacheEnabled) {
+      // 创建一个 CachingExecutor 类型，使用装饰器模式
       executor = new CachingExecutor(executor);
     }
+    // 添加拦截器，这里用户可以实现自定义的拦截器
     executor = (Executor) interceptorChain.pluginAll(executor);
     return executor;
   }
@@ -765,6 +816,7 @@ public class Configuration {
   }
 
   public void addMappedStatement(MappedStatement ms) {
+    // SQL 语句声明
     mappedStatements.put(ms.getId(), ms);
   }
 
@@ -841,6 +893,14 @@ public class Configuration {
     mapperRegistry.addMapper(type);
   }
 
+  /**
+   * 获取映射器
+   *
+   * @param type
+   * @param sqlSession
+   * @param <T>
+   * @return
+   */
   public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
     return mapperRegistry.getMapper(type, sqlSession);
   }

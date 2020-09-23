@@ -96,27 +96,41 @@ public class XMLConfigBuilder extends BaseBuilder {
       throw new BuilderException("Each XMLConfigBuilder can only be used once.");
     }
     parsed = true;
+    // 进行解析
     parseConfiguration(parser.evalNode("/configuration"));
     return configuration;
   }
 
   private void parseConfiguration(XNode root) {
     try {
+      // 解析 properties 属性
       // issue #117 read properties first
       propertiesElement(root.evalNode("properties"));
+      // 解析设置 setting
       Properties settings = settingsAsProperties(root.evalNode("settings"));
       loadCustomVfs(settings);
+      // 解析自定义日志
       loadCustomLogImpl(settings);
+      // 解析类型别名
       typeAliasesElement(root.evalNode("typeAliases"));
+      // 解析插件
       pluginElement(root.evalNode("plugins"));
+      // 解析对象工厂
       objectFactoryElement(root.evalNode("objectFactory"));
+      // 解析对象包装工厂
       objectWrapperFactoryElement(root.evalNode("objectWrapperFactory"));
+      // 解析反射器工厂
       reflectorFactoryElement(root.evalNode("reflectorFactory"));
+      // 设置配置元素
       settingsElement(settings);
       // read it after objectFactory and objectWrapperFactory issue #631
+      // 解析环境
       environmentsElement(root.evalNode("environments"));
+      // 解析数据库 ID 提供者
       databaseIdProviderElement(root.evalNode("databaseIdProvider"));
+      // 解析类型处理器
       typeHandlerElement(root.evalNode("typeHandlers"));
+      // 解析映射文件
       mapperElement(root.evalNode("mappers"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing SQL Mapper Configuration. Cause: " + e, e);
@@ -280,7 +294,9 @@ public class XMLConfigBuilder extends BaseBuilder {
       for (XNode child : context.getChildren()) {
         String id = child.getStringAttribute("id");
         if (isSpecifiedEnvironment(id)) {
+          // 事务管理器
           TransactionFactory txFactory = transactionManagerElement(child.evalNode("transactionManager"));
+          // 数据源
           DataSourceFactory dsFactory = dataSourceElement(child.evalNode("dataSource"));
           DataSource dataSource = dsFactory.getDataSource();
           Environment.Builder environmentBuilder = new Environment.Builder(id)
@@ -364,26 +380,34 @@ public class XMLConfigBuilder extends BaseBuilder {
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
         if ("package".equals(child.getName())) {
+          // 解析 package 属性
           String mapperPackage = child.getStringAttribute("name");
           configuration.addMappers(mapperPackage);
         } else {
+          // 解析 resource 属性
           String resource = child.getStringAttribute("resource");
+          // URL 属性
           String url = child.getStringAttribute("url");
+          // class 属性
           String mapperClass = child.getStringAttribute("class");
           if (resource != null && url == null && mapperClass == null) {
+            // resource 不为空，URL 和 class 为空
             ErrorContext.instance().resource(resource);
             InputStream inputStream = Resources.getResourceAsStream(resource);
             XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, resource, configuration.getSqlFragments());
             mapperParser.parse();
           } else if (resource == null && url != null && mapperClass == null) {
+            // URL 不为空，resource 和 class 为空
             ErrorContext.instance().resource(url);
             InputStream inputStream = Resources.getUrlAsStream(url);
             XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, url, configuration.getSqlFragments());
             mapperParser.parse();
           } else if (resource == null && url == null && mapperClass != null) {
+            // class 不为空，resource 和 URL 为空
             Class<?> mapperInterface = Resources.classForName(mapperClass);
             configuration.addMapper(mapperInterface);
           } else {
+            // 否则就抛异常
             throw new BuilderException("A mapper element may only specify a url, resource or class, but not more than one.");
           }
         }

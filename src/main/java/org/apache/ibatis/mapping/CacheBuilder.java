@@ -40,6 +40,10 @@ import org.apache.ibatis.reflection.SystemMetaObject;
 public class CacheBuilder {
   private final String id;
   private Class<? extends Cache> implementation;
+
+  /**
+   * Cache 的装饰器，有很多装饰器，每个装饰器的功能不同，比如有：同步、日志、序列化、存储等功能的缓存
+   */
   private final List<Class<? extends Cache>> decorators;
   private Integer size;
   private Long clearInterval;
@@ -89,16 +93,28 @@ public class CacheBuilder {
     return this;
   }
 
+  /**
+   * 构建一个缓存
+   *
+   * @return
+   */
   public Cache build() {
+    // 设置默认实现类，和初始化的装饰器 LruCache
     setDefaultImplementations();
+    // 通过反射创建一个 PerpetualCache 对象
     Cache cache = newBaseCacheInstance(implementation, id);
+    // 设置缓存属性
     setCacheProperties(cache);
+    // 不要为自定义的缓存应用装饰器
     // issue #352, do not apply decorators to custom caches
     if (PerpetualCache.class.equals(cache.getClass())) {
+      // 如果是 PerpetualCache 类型的缓存，那么就给它设置装饰器
       for (Class<? extends Cache> decorator : decorators) {
+        // 创建一个缓存装饰器实例
         cache = newCacheDecoratorInstance(decorator, cache);
         setCacheProperties(cache);
       }
+      // 设置其他标准的装饰器
       cache = setStandardDecorators(cache);
     } else if (!LoggingCache.class.isAssignableFrom(cache.getClass())) {
       cache = new LoggingCache(cache);
@@ -106,6 +122,9 @@ public class CacheBuilder {
     return cache;
   }
 
+  /**
+   * 设置缓存的默认实现
+   */
   private void setDefaultImplementations() {
     if (implementation == null) {
       implementation = PerpetualCache.class;
@@ -115,22 +134,35 @@ public class CacheBuilder {
     }
   }
 
+  /**
+   * 设置标准的缓存装饰器
+   *
+   * @param cache
+   * @return
+   */
   private Cache setStandardDecorators(Cache cache) {
     try {
+      // 获取缓存的元对象
       MetaObject metaCache = SystemMetaObject.forObject(cache);
+      // 设置元数据的信息
       if (size != null && metaCache.hasSetter("size")) {
         metaCache.setValue("size", size);
       }
       if (clearInterval != null) {
+        // 根据清除间隔属性，设置定时刷新缓存的装饰器缓存 ScheduledCache
         cache = new ScheduledCache(cache);
         ((ScheduledCache) cache).setClearInterval(clearInterval);
       }
       if (readWrite) {
+        // 根据是否可读写属性，设置序列化缓存装饰器 SerializedCache
         cache = new SerializedCache(cache);
       }
+      // 设置日志缓存装饰器 LoggingCache
       cache = new LoggingCache(cache);
+      // 设置同步缓存装饰器 SynchronizedCache
       cache = new SynchronizedCache(cache);
       if (blocking) {
+        // 根据是否阻塞，设置阻塞缓存装饰器
         cache = new BlockingCache(cache);
       }
       return cache;

@@ -34,6 +34,9 @@ import org.apache.ibatis.session.RowBounds;
  */
 public class RoutingStatementHandler implements StatementHandler {
 
+  /**
+   * 关联一个真正的 RoutingStatementHandler
+   */
   private final StatementHandler delegate;
 
   public RoutingStatementHandler(Executor executor, MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {

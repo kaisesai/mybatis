@@ -26,6 +26,11 @@ import org.apache.ibatis.session.TransactionIsolationLevel;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * 这个事务时让容器管理事务的整个生命周期。
+ * 只有在 getConnection() 方法被调用的时候，才会创建连接检查。
+ * 忽略所有的提交或者回滚请求。
+ * 默认情况下，它关闭所有的连接，但是可以被配置为不关闭。
+ *
  * {@link Transaction} that lets the container manage the full lifecycle of the transaction.
  * Delays connection retrieval until getConnection() is called.
  * Ignores all commit or rollback requests.

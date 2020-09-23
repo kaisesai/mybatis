@@ -25,6 +25,8 @@ import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.TransactionFactory;
 
 /**
+ * 事务工厂
+ *
  * Creates {@link ManagedTransaction} instances.
  *
  * @author Clinton Begin
@@ -47,6 +49,7 @@ public class ManagedTransactionFactory implements TransactionFactory {
 
   @Override
   public Transaction newTransaction(Connection conn) {
+    // 创建一个被管理的事务
     return new ManagedTransaction(conn, closeConnection);
   }
 
@@ -55,6 +58,7 @@ public class ManagedTransactionFactory implements TransactionFactory {
     // Silently ignores autocommit and isolation level, as managed transactions are entirely
     // controlled by an external manager.  It's silently ignored so that
     // code remains portable between managed and unmanaged configurations.
+    // 创建一个被管理的事务
     return new ManagedTransaction(ds, level, closeConnection);
   }
 }

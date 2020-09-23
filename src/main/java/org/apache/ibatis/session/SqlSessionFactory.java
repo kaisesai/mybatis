@@ -18,6 +18,8 @@ package org.apache.ibatis.session;
 import java.sql.Connection;
 
 /**
+ * 创建一个 SqlSession
+ *
  * Creates an {@link SqlSession} out of a connection or a DataSource
  *
  * @author Clinton Begin

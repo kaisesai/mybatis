@@ -44,8 +44,11 @@ public class SimpleExecutor extends BaseExecutor {
   public int doUpdate(MappedStatement ms, Object parameter) throws SQLException {
     Statement stmt = null;
     try {
+      // 获取配置类型
       Configuration configuration = ms.getConfiguration();
+      // 获取 StatementHandler 处理器
       StatementHandler handler = configuration.newStatementHandler(this, ms, parameter, RowBounds.DEFAULT, null, null);
+      // 创建 Statement
       stmt = prepareStatement(handler, ms.getStatementLog());
       return handler.update(stmt);
     } finally {
@@ -57,8 +60,11 @@ public class SimpleExecutor extends BaseExecutor {
   public <E> List<E> doQuery(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) throws SQLException {
     Statement stmt = null;
     try {
+      // 获取配置类型
       Configuration configuration = ms.getConfiguration();
+      // 获取 StatementHandler 处理器
       StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, resultHandler, boundSql);
+      // 创建 Statement
       stmt = prepareStatement(handler, ms.getStatementLog());
       return handler.query(stmt, resultHandler);
     } finally {
@@ -68,8 +74,11 @@ public class SimpleExecutor extends BaseExecutor {
 
   @Override
   protected <E> Cursor<E> doQueryCursor(MappedStatement ms, Object parameter, RowBounds rowBounds, BoundSql boundSql) throws SQLException {
+    // 获取配置类型
     Configuration configuration = ms.getConfiguration();
+    // 获取 StatementHandler 处理器
     StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, null, boundSql);
+    // 创建 Statement
     Statement stmt = prepareStatement(handler, ms.getStatementLog());
     Cursor<E> cursor = handler.queryCursor(stmt);
     stmt.closeOnCompletion();
@@ -81,10 +90,21 @@ public class SimpleExecutor extends BaseExecutor {
     return Collections.emptyList();
   }
 
+  /**
+   * 准备一个 Statement
+   *
+   * @param handler
+   * @param statementLog
+   * @return
+   * @throws SQLException
+   */
   private Statement prepareStatement(StatementHandler handler, Log statementLog) throws SQLException {
     Statement stmt;
+    // 获取连接
     Connection connection = getConnection(statementLog);
+    // 通过 StatementHandler 创建一个 Statement
     stmt = handler.prepare(connection, transaction.getTimeout());
+    // 初始化参数
     handler.parameterize(stmt);
     return stmt;
   }

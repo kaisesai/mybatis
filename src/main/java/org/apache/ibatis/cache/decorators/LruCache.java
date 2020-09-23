@@ -47,6 +47,7 @@ public class LruCache implements Cache {
   }
 
   public void setSize(final int size) {
+    // 重写 LinkedHashMap 的 removeEldestEntry() 方法，实现 LRU 算法
     keyMap = new LinkedHashMap<Object, Object>(size, .75F, true) {
       private static final long serialVersionUID = 4267176411845948333L;
 
@@ -69,6 +70,7 @@ public class LruCache implements Cache {
 
   @Override
   public Object getObject(Object key) {
+    // 这里获取 key 是为了让 key 保持最新，不至于被 LRU 清除掉
     keyMap.get(key); // touch
     return delegate.getObject(key);
   }

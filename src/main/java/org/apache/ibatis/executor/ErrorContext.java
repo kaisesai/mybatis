@@ -16,6 +16,8 @@
 package org.apache.ibatis.executor;
 
 /**
+ * 错误上下文，主要是用来收集当前线程上mybatis 执行的各种信息，用于在抛异常的时候打印信息
+ *
  * @author Clinton Begin
  */
 public class ErrorContext {

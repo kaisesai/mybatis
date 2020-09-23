@@ -46,6 +46,7 @@ public class SqlSessionFactoryBuilder {
 
   public SqlSessionFactory build(Reader reader, String environment, Properties properties) {
     try {
+      // 创建一个 XMLConfigBuilder 进行解析流，解析为一个 Configuration 实例
       XMLConfigBuilder parser = new XMLConfigBuilder(reader, environment, properties);
       return build(parser.parse());
     } catch (Exception e) {
@@ -88,7 +89,13 @@ public class SqlSessionFactoryBuilder {
     }
   }
 
+  /**
+   * 构建一个 SQLsession 工厂
+   * @param config
+   * @return
+   */
   public SqlSessionFactory build(Configuration config) {
+    // 创建一个默认的 SQLsession 工厂
     return new DefaultSqlSessionFactory(config);
   }
 

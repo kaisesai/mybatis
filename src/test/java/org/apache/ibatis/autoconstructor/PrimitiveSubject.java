@@ -15,9 +15,10 @@
  */
 package org.apache.ibatis.autoconstructor;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class PrimitiveSubject {
+public class PrimitiveSubject implements Serializable {
   private final int id;
   private final String name;
   private final int age;
@@ -35,4 +36,11 @@ public class PrimitiveSubject {
     this.active = active;
     this.dt = dt;
   }
+
+  @Override
+  public String toString() {
+    return "PrimitiveSubject{ hashcode="+ this.hashCode() + ", id=" + id + ", name='" + name + '\'' + ", age=" + age
+      + ", height=" + height + ", weight=" + weight + ", active=" + active + ", dt=" + dt + '}';
+  }
+
 }

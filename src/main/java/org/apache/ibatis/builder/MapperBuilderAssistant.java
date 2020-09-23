@@ -100,6 +100,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
         throw new BuilderException("Dots are not allowed in element names, please remove it from " + base);
       }
     }
+    // 格式为：命令空间 + "." + base
     return currentNamespace + "." + base;
   }
 
@@ -121,6 +122,18 @@ public class MapperBuilderAssistant extends BaseBuilder {
     }
   }
 
+  /**
+   * 创建一个新的缓存
+   *
+   * @param typeClass
+   * @param evictionClass
+   * @param flushInterval
+   * @param size
+   * @param readWrite
+   * @param blocking
+   * @param props
+   * @return
+   */
   public Cache useNewCache(Class<? extends Cache> typeClass,
       Class<? extends Cache> evictionClass,
       Long flushInterval,
@@ -128,15 +141,20 @@ public class MapperBuilderAssistant extends BaseBuilder {
       boolean readWrite,
       boolean blocking,
       Properties props) {
+    // 缓存构建器
     Cache cache = new CacheBuilder(currentNamespace)
+        // 这里默认使用 PerpetualCache 缓存类型实现，具体的缓存实现类
         .implementation(valueOrDefault(typeClass, PerpetualCache.class))
+        // 添加 LruCache 缓存装饰器
         .addDecorator(valueOrDefault(evictionClass, LruCache.class))
         .clearInterval(flushInterval)
         .size(size)
         .readWrite(readWrite)
         .blocking(blocking)
         .properties(props)
+        // 开始构建缓存
         .build();
+    // 把缓存放入配置类中
     configuration.addCache(cache);
     currentCache = cache;
     return cache;
@@ -267,9 +285,11 @@ public class MapperBuilderAssistant extends BaseBuilder {
       throw new IncompleteElementException("Cache-ref not yet resolved");
     }
 
+    // 解析声明 ID
     id = applyCurrentNamespace(id, false);
     boolean isSelect = sqlCommandType == SqlCommandType.SELECT;
 
+    // 开始构建一个映射声明
     MappedStatement.Builder statementBuilder = new MappedStatement.Builder(configuration, id, sqlSource, sqlCommandType)
         .resource(resource)
         .fetchSize(fetchSize)
@@ -288,12 +308,14 @@ public class MapperBuilderAssistant extends BaseBuilder {
         .useCache(valueOrDefault(useCache, isSelect))
         .cache(currentCache);
 
+    // 获取声明参数映射
     ParameterMap statementParameterMap = getStatementParameterMap(parameterMap, parameterType, id);
     if (statementParameterMap != null) {
       statementBuilder.parameterMap(statementParameterMap);
     }
 
     MappedStatement statement = statementBuilder.build();
+    // 把声明对象放入 configuration 中
     configuration.addMappedStatement(statement);
     return statement;
   }

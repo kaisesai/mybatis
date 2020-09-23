@@ -36,11 +36,14 @@ public class TransactionalCacheManager {
   }
 
   public void putObject(Cache cache, CacheKey key, Object value) {
+    // 获取 cache 对应的 TransactionalCache，然后把 key 和 value 存入
     getTransactionalCache(cache).putObject(key, value);
   }
 
   public void commit() {
+    // 遍历事务缓存
     for (TransactionalCache txCache : transactionalCaches.values()) {
+      // 提交事务
       txCache.commit();
     }
   }
@@ -52,6 +55,8 @@ public class TransactionalCacheManager {
   }
 
   private TransactionalCache getTransactionalCache(Cache cache) {
+    // 如果 transactionalCaches 中的 cache 键没有对应的数据，则创建 TransactionalCache 对象
+    // 把 cache 对象当做 TransactionalCache 构造器的参数传入
     return transactionalCaches.computeIfAbsent(cache, TransactionalCache::new);
   }
 

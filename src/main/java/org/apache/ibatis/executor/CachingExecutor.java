@@ -33,12 +33,21 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * 缓存执行器，装饰器模式，声明周期是一个 session
+ *
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
 public class CachingExecutor implements Executor {
 
+  /**
+   * 委派的执行器
+   */
   private final Executor delegate;
+
+  /**
+   * 事务缓存管理器
+   */
   private final TransactionalCacheManager tcm = new TransactionalCacheManager();
 
   public CachingExecutor(Executor delegate) {
@@ -84,7 +93,9 @@ public class CachingExecutor implements Executor {
 
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException {
+    // 绑定 SQL
     BoundSql boundSql = ms.getBoundSql(parameterObject);
+    // 构建缓存key
     CacheKey key = createCacheKey(ms, parameterObject, rowBounds, boundSql);
     return query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
   }
@@ -92,8 +103,10 @@ public class CachingExecutor implements Executor {
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql)
       throws SQLException {
+    // 获取二级缓存配置，它是从解析 mapper.xml 和 mapper 接口的 @CacheNamespace 注解得出来的
     Cache cache = ms.getCache();
     if (cache != null) {
+      // 是否需要刷新缓存
       flushCacheIfRequired(ms);
       if (ms.isUseCache() && resultHandler == null) {
         ensureNoOutParams(ms, boundSql);
@@ -101,11 +114,13 @@ public class CachingExecutor implements Executor {
         List<E> list = (List<E>) tcm.getObject(cache, key);
         if (list == null) {
           list = delegate.query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
+          // 缓存管理器，把缓存
           tcm.putObject(cache, key, list); // issue #578 and #116
         }
         return list;
       }
     }
+    // 委派实际的 BaseExecutor 类型的查询
     return delegate.query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
   }
 
@@ -116,7 +131,9 @@ public class CachingExecutor implements Executor {
 
   @Override
   public void commit(boolean required) throws SQLException {
+    // 提交事务
     delegate.commit(required);
+    // 事务缓存管理器提交
     tcm.commit();
   }
 
@@ -164,6 +181,7 @@ public class CachingExecutor implements Executor {
   private void flushCacheIfRequired(MappedStatement ms) {
     Cache cache = ms.getCache();
     if (cache != null && ms.isFlushCacheRequired()) {
+      // 查询之前，先清空二级缓存
       tcm.clear(cache);
     }
   }

@@ -23,6 +23,8 @@ import javax.sql.DataSource;
 import org.apache.ibatis.session.TransactionIsolationLevel;
 
 /**
+ * 事务工厂
+ *
  * Creates {@link Transaction} instances.
  *
  * @author Clinton Begin

@@ -44,10 +44,15 @@ public class PreparedStatementHandler extends BaseStatementHandler {
   @Override
   public int update(Statement statement) throws SQLException {
     PreparedStatement ps = (PreparedStatement) statement;
+    // 执行更新
     ps.execute();
+    // 获取更新的行数
     int rows = ps.getUpdateCount();
+    // 获取参数对象
     Object parameterObject = boundSql.getParameterObject();
+    // 获取键生成器
     KeyGenerator keyGenerator = mappedStatement.getKeyGenerator();
+    // 后置处理器键，比如这里会针对 insert 语句，会设置插入之后的主键到参数对象上。
     keyGenerator.processAfter(executor, mappedStatement, ps, parameterObject);
     return rows;
   }
@@ -55,23 +60,35 @@ public class PreparedStatementHandler extends BaseStatementHandler {
   @Override
   public void batch(Statement statement) throws SQLException {
     PreparedStatement ps = (PreparedStatement) statement;
+    // 批量查询
     ps.addBatch();
   }
 
   @Override
   public <E> List<E> query(Statement statement, ResultHandler resultHandler) throws SQLException {
     PreparedStatement ps = (PreparedStatement) statement;
+    // 执行查询
     ps.execute();
+    // 通过结果集处理器处理结果
     return resultSetHandler.handleResultSets(ps);
   }
 
   @Override
   public <E> Cursor<E> queryCursor(Statement statement) throws SQLException {
     PreparedStatement ps = (PreparedStatement) statement;
+    // 执行查询
     ps.execute();
+    // 结果集处理器处理数据
     return resultSetHandler.handleCursorResultSets(ps);
   }
 
+  /**
+   * 初始化一个 Statement
+   *
+   * @param connection
+   * @return
+   * @throws SQLException
+   */
   @Override
   protected Statement instantiateStatement(Connection connection) throws SQLException {
     String sql = boundSql.getSql();
@@ -83,6 +100,7 @@ public class PreparedStatementHandler extends BaseStatementHandler {
         return connection.prepareStatement(sql, keyColumnNames);
       }
     } else if (mappedStatement.getResultSetType() == ResultSetType.DEFAULT) {
+      //
       return connection.prepareStatement(sql);
     } else {
       return connection.prepareStatement(sql, mappedStatement.getResultSetType().getValue(), ResultSet.CONCUR_READ_ONLY);
@@ -91,6 +109,7 @@ public class PreparedStatementHandler extends BaseStatementHandler {
 
   @Override
   public void parameterize(Statement statement) throws SQLException {
+    // 使用参数化对象进行设置参数
     parameterHandler.setParameters((PreparedStatement) statement);
   }
 

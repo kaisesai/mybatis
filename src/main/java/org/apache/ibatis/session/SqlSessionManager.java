@@ -30,6 +30,8 @@ import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.reflection.ExceptionUtil;
 
 /**
+ * SQLsession 管理器
+ *
  * @author Larry Meadors
  */
 public class SqlSessionManager implements SqlSessionFactory, SqlSession {
@@ -258,6 +260,7 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
 
   @Override
   public <T> T getMapper(Class<T> type) {
+    // 获取配置类
     return getConfiguration().getMapper(type, this);
   }
 

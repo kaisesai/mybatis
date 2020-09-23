@@ -41,12 +41,17 @@ public final class MappedStatement {
   private StatementType statementType;
   private ResultSetType resultSetType;
   private SqlSource sqlSource;
+
+  /**
+   * 默认是 PerpetualCache 类型
+   */
   private Cache cache;
   private ParameterMap parameterMap;
   private List<ResultMap> resultMaps;
   private boolean flushCacheRequired;
   private boolean useCache;
   private boolean resultOrdered;
+  // SQL 命令类型
   private SqlCommandType sqlCommandType;
   private KeyGenerator keyGenerator;
   private String[] keyProperties;

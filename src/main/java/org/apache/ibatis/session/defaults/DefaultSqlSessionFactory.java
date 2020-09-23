@@ -87,15 +87,29 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     return configuration;
   }
 
+  /**
+   * 打开一个 session
+   *
+   * @param execType
+   * @param level
+   * @param autoCommit
+   * @return
+   */
   private SqlSession openSessionFromDataSource(ExecutorType execType, TransactionIsolationLevel level, boolean autoCommit) {
     Transaction tx = null;
     try {
+      // 获取环境信息
       final Environment environment = configuration.getEnvironment();
+      // 获取事务工厂
       final TransactionFactory transactionFactory = getTransactionFactoryFromEnvironment(environment);
+      // 获取一个事务
       tx = transactionFactory.newTransaction(environment.getDataSource(), level, autoCommit);
+      // 创建一个执行器
       final Executor executor = configuration.newExecutor(tx, execType);
+      // 创建一个默认的 DefaultSqlSession
       return new DefaultSqlSession(configuration, executor, autoCommit);
     } catch (Exception e) {
+      // 遇到异常关闭事务
       closeTransaction(tx); // may have fetched a connection so lets call close()
       throw ExceptionFactory.wrapException("Error opening session.  Cause: " + e, e);
     } finally {
@@ -125,13 +139,26 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     }
   }
 
+  /**
+   * 从环境信息中创建一个事务工厂
+   *
+   * @param environment
+   * @return
+   */
   private TransactionFactory getTransactionFactoryFromEnvironment(Environment environment) {
     if (environment == null || environment.getTransactionFactory() == null) {
+      // 创建默认的管理的事务工厂
       return new ManagedTransactionFactory();
     }
+    // 从环境中获取事务工厂
     return environment.getTransactionFactory();
   }
 
+  /**
+   * 关闭事务
+   *
+   * @param tx
+   */
   private void closeTransaction(Transaction tx) {
     if (tx != null) {
       try {
